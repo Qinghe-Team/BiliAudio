@@ -2,7 +2,6 @@ package com.qinghe.biliaudio.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.net.URLEncoder
 import java.security.MessageDigest
@@ -52,7 +51,7 @@ object WbiSigner {
         return withContext(Dispatchers.IO) {
             val (imgKey, subKey) = fetchWbiKeys()
             val raw = imgKey + subKey
-            val mixed = MIX_INDEXES.mapNotNull { raw.getOrNull(it) }.joinToString("").take(32)
+            val mixed = MIX_INDEXES.map { raw.getOrNull(it) }.filterNotNull().joinToString("").take(32)
             cachedMixinKey = mixed
             keyExpiry = now + KEY_CACHE_TTL_MS
             mixed
