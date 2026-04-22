@@ -9,6 +9,7 @@ enum class AppDestination(val route: String) {
     INTERACTIONS("interactions"),
     COMMENTS("comments"),
     FAVORITES("favorites"),
+    HISTORY("history"),
     PROFILE("profile"),
     CUSTOM_SPEED("custom_speed"),
     SLEEP_TIMER("sleep_timer")

@@ -8,6 +8,7 @@ import java.util.List;
 
 public class AuthRepository {
     private final AuthApiClient authApiClient;
+    private UserProfile currentUser = new UserProfile("游客", 0, false, "未登录时可浏览推荐与搜索结果");
 
     public AuthRepository(AuthApiClient authApiClient) {
         this.authApiClient = authApiClient;
@@ -18,6 +19,16 @@ public class AuthRepository {
     }
 
     public UserProfile login(AuthMethod method) {
-        return authApiClient.login(method);
+        currentUser = authApiClient.login(method);
+        return currentUser;
+    }
+
+    public UserProfile logout() {
+        currentUser = new UserProfile("游客", 0, false, "已退出登录");
+        return currentUser;
+    }
+
+    public UserProfile getCurrentUser() {
+        return currentUser;
     }
 }

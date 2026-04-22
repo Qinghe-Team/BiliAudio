@@ -15,7 +15,7 @@ import com.qinghe.biliaudio.model.VideoItem
 import java.util.Locale
 
 class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
-    var userProfile by mutableStateOf(appContainer.userRepository.currentUser)
+    var userProfile by mutableStateOf(appContainer.authRepository.currentUser)
         private set
     var loginMethods by mutableStateOf(appContainer.authRepository.supportedMethods)
         private set
@@ -35,6 +35,8 @@ class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
         private set
     var favoriteCollections by mutableStateOf(appContainer.favoriteRepository.collections)
         private set
+    var playHistory by mutableStateOf(appContainer.historyRepository.recentHistory)
+        private set
     var playbackSettings by mutableStateOf(appContainer.playerController.playbackSettings)
         private set
     var customSpeedDraft by mutableDoubleStateOf(playbackSettings.playbackSpeed)
@@ -44,6 +46,10 @@ class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
 
     fun login(method: AuthMethod) {
         userProfile = appContainer.authRepository.login(method)
+    }
+
+    fun logout() {
+        userProfile = appContainer.authRepository.logout()
     }
 
     fun search(keyword: String) {
@@ -63,6 +69,8 @@ class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
     fun startPlayback() {
         selectedVideo?.let {
             playbackSettings = appContainer.playerController.play(it)
+            appContainer.historyRepository.recordPlay(it)
+            playHistory = appContainer.historyRepository.recentHistory
         }
     }
 

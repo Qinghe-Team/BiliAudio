@@ -9,6 +9,7 @@ import com.qinghe.biliaudio.api.VideoApiClient;
 import com.qinghe.biliaudio.auth.AuthRepository;
 import com.qinghe.biliaudio.comment.CommentRepository;
 import com.qinghe.biliaudio.favorite.FavoriteRepository;
+import com.qinghe.biliaudio.history.HistoryRepository;
 import com.qinghe.biliaudio.interaction.InteractionRepository;
 import com.qinghe.biliaudio.player.PlayerController;
 import com.qinghe.biliaudio.search.SearchRepository;
@@ -24,6 +25,7 @@ public class AppContainer {
     public final CommentRepository commentRepository;
     public final InteractionRepository interactionRepository;
     public final PlayerController playerController;
+    public final HistoryRepository historyRepository;
 
     public AppContainer() {
         AuthApiClient authApiClient = new AuthApiClient();
@@ -41,5 +43,6 @@ public class AppContainer {
         commentRepository = new CommentRepository();
         interactionRepository = new InteractionRepository(interactionApiClient);
         playerController = new PlayerController(playerApiClient);
+        historyRepository = new HistoryRepository();
     }
 }

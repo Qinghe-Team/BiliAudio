@@ -60,7 +60,16 @@ fun BiliAudioApp(appContainer: AppContainer) {
             CommentsScreen(viewModel = viewModel)
         }
         composable(AppDestination.FAVORITES.route) {
-            FavoritesScreen(viewModel = viewModel)
+            FavoritesScreen(
+                viewModel = viewModel,
+                openHistory = { navController.navigate(AppDestination.HISTORY.route) }
+            )
+        }
+        composable(AppDestination.HISTORY.route) {
+            HistoryScreen(
+                viewModel = viewModel,
+                openDetail = { navController.navigate(AppDestination.DETAIL.route) }
+            )
         }
         composable(AppDestination.PROFILE.route) {
             ProfileScreen(viewModel = viewModel)
@@ -87,6 +96,7 @@ private fun HomeRoute(viewModel: AppViewModel, navigate: NavHostController) {
         onLogin = { navigate.navigate(AppDestination.LOGIN.route) },
         onSearch = { navigate.navigate(AppDestination.SEARCH.route) },
         onFavorites = { navigate.navigate(AppDestination.FAVORITES.route) },
+        onHistory = { navigate.navigate(AppDestination.HISTORY.route) },
         onProfile = { navigate.navigate(AppDestination.PROFILE.route) },
         onPlayer = { navigate.navigate(AppDestination.PLAYER.route) },
         onOpenVideo = {

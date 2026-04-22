@@ -39,6 +39,7 @@ fun HomeScreen(
     onLogin: () -> Unit,
     onSearch: () -> Unit,
     onFavorites: () -> Unit,
+    onHistory: () -> Unit,
     onProfile: () -> Unit,
     onPlayer: () -> Unit,
     onOpenVideo: (VideoItem) -> Unit
@@ -56,6 +57,7 @@ fun HomeScreen(
         item { AppChip("搜索", "热门词与结果列表", onSearch) }
         item { AppChip("登录", if (viewModel.userProfile.loggedIn) "已登录：${viewModel.userProfile.name}" else "支持扫码/验证码/密码", onLogin) }
         item { AppChip("我的收藏", "收藏夹 / 稍后再听 / 历史", onFavorites) }
+        item { AppChip("播放历史", "查看最近播放记录", onHistory) }
         item { AppChip("个人中心", "账号信息与阶段规划", onProfile) }
         item { SectionLabel("推荐内容") }
         items(viewModel.featuredVideos.size) { index ->
@@ -85,6 +87,9 @@ fun LoginScreen(viewModel: AppViewModel) {
                 secondary = loginHint(method),
                 onClick = { viewModel.login(method) }
             )
+        }
+        if (viewModel.userProfile.loggedIn) {
+            item { AppChip("退出登录", "切回游客模式", onClick = viewModel::logout) }
         }
     }
 }
@@ -215,7 +220,7 @@ fun CommentsScreen(viewModel: AppViewModel) {
 }
 
 @Composable
-fun FavoritesScreen(viewModel: AppViewModel) {
+fun FavoritesScreen(viewModel: AppViewModel, openHistory: () -> Unit) {
     WatchListScreen(title = "收藏与历史") {
         item {
             TextBlock(
@@ -230,6 +235,33 @@ fun FavoritesScreen(viewModel: AppViewModel) {
                 secondary = "${collection.itemCount} 项 · ${collection.description}",
                 onClick = {}
             )
+        }
+        item { AppChip("查看播放历史", "按最近播放时间排序", onClick = openHistory) }
+    }
+}
+
+@Composable
+fun HistoryScreen(viewModel: AppViewModel, openDetail: () -> Unit) {
+    WatchListScreen(title = "播放历史") {
+        if (viewModel.playHistory.isEmpty()) {
+            item {
+                TextBlock(
+                    title = "暂无历史记录",
+                    body = "开始播放任意内容后会自动记录。"
+                )
+            }
+        } else {
+            items(viewModel.playHistory.size) { index ->
+                val video = viewModel.playHistory[index]
+                AppChip(
+                    label = video.title,
+                    secondary = "${video.author} · ${video.durationLabel}",
+                    onClick = {
+                        viewModel.selectVideo(video)
+                        openDetail()
+                    }
+                )
+            }
         }
     }
 }
@@ -246,7 +278,7 @@ fun ProfileScreen(viewModel: AppViewModel) {
         item {
             TextBlock(
                 title = "一期已接入域",
-                body = "认证、搜索、视频、互动、评论、收藏、播放控制；后续补齐个人投稿、历史同步、完整 API。"
+                body = "认证、搜索、视频、互动、评论、收藏、播放控制、播放历史；后续补齐个人投稿、历史同步、完整 API。"
             )
         }
         item {
