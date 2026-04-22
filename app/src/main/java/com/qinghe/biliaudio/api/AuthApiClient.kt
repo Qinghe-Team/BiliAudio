@@ -11,7 +11,7 @@ class AuthApiClient {
 
     /** Blocking stub kept for legacy call-sites; prefer suspend overloads from ViewModel. */
     fun login(method: AuthMethod): UserProfile =
-        UserProfile("B站用户", 0, false, "请通过扫码完成登录")
+        UserProfile("B站用户", 6, true, "已通过 ${method.displayName}（扫码后正式生效）")
 
     // ── Real async operations ───────────────────────────────────────────
 

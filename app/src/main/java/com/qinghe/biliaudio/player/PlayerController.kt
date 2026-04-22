@@ -17,11 +17,11 @@ import kotlinx.coroutines.withContext
  * on the main thread through ExoPlayer's thread-safe API.
  */
 class PlayerController(
-    context: Context,
+    context: Context?,
     private val playerApiClient: PlayerApiClient,
     private val videoApiClient: VideoApiClient
 ) {
-    private val appContext = context.applicationContext
+    private val appContext = context?.applicationContext
 
     // ExoPlayer is main-thread only; lazy-initialised on first access from UI.
     private var exoPlayer: ExoPlayer? = null
@@ -33,10 +33,11 @@ class PlayerController(
     val speedPresets: List<Double> get() = playerApiClient.speedPresets
     val sleepTimerPresets: List<Int> get() = playerApiClient.sleepTimerPresets
 
-    /** Call on the main thread before using the player. */
+    /** Call on the main thread before using the player. Does nothing if Context is unavailable. */
     fun ensurePlayerCreated() {
+        val ctx = appContext ?: return
         if (exoPlayer == null) {
-            exoPlayer = ExoPlayer.Builder(appContext).build().also { player ->
+            exoPlayer = ExoPlayer.Builder(ctx).build().also { player ->
                 player.addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _settings = PlaybackSettings(
