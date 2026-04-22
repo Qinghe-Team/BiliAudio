@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateBottomPadding
-import androidx.compose.foundation.layout.calculateTopPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,7 +13,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
-import androidx.wear.compose.foundation.AutoCenteringParams
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
@@ -51,11 +49,11 @@ fun HomeScreen(
                 onClick = onPlayer,
                 title = { Text("当前播放") }
             ) {
-                Text(if (viewModel.playbackSettings.playing) viewModel.nowPlayingTitle() else "尚未开始播放，点击进入播放器")
+                Text(if (viewModel.playbackSettings.isPlaying) viewModel.nowPlayingTitle() else "尚未开始播放，点击进入播放器")
             }
         }
         item { AppChip("搜索", "热门词与结果列表", onSearch) }
-        item { AppChip("登录", if (viewModel.userProfile.loggedIn) "已登录：${viewModel.userProfile.name}" else "支持扫码/验证码/密码", onLogin) }
+        item { AppChip("登录", if (viewModel.userProfile.isLoggedIn) "已登录：${viewModel.userProfile.name}" else "支持扫码/验证码/密码", onLogin) }
         item { AppChip("我的收藏", "收藏夹 / 稍后再听 / 历史", onFavorites) }
         item { AppChip("播放历史", "查看最近播放记录", onHistory) }
         item { AppChip("个人中心", "账号信息与阶段规划", onProfile) }
@@ -76,7 +74,7 @@ fun LoginScreen(viewModel: AppViewModel) {
     WatchListScreen(title = "登录") {
         item {
             TextBlock(
-                title = if (viewModel.userProfile.loggedIn) "当前已登录" else "选择登录方式",
+                title = if (viewModel.userProfile.isLoggedIn) "当前已登录" else "选择登录方式",
                 body = viewModel.userProfile.signature
             )
         }
@@ -88,7 +86,7 @@ fun LoginScreen(viewModel: AppViewModel) {
                 onClick = { viewModel.login(method) }
             )
         }
-        if (viewModel.userProfile.loggedIn) {
+        if (viewModel.userProfile.isLoggedIn) {
             item { AppChip("退出登录", "切回游客模式", onClick = viewModel::logout) }
         }
     }
@@ -166,7 +164,7 @@ fun PlayerScreen(viewModel: AppViewModel, openSpeed: () -> Unit, openTimer: () -
     WatchListScreen(title = "播放器") {
         item {
             TextBlock(
-                title = if (viewModel.playbackSettings.playing) viewModel.playbackSettings.currentTitle else "等待播放",
+                title = if (viewModel.playbackSettings.isPlaying) viewModel.playbackSettings.currentTitle else "等待播放",
                 body = "当前倍率 ${String.format("%.1f", viewModel.playbackSettings.playbackSpeed)}x · ${timerLabel(viewModel.playbackSettings.sleepTimerMinutes)}"
             )
         }
@@ -272,7 +270,7 @@ fun ProfileScreen(viewModel: AppViewModel) {
         item {
             TextBlock(
                 title = viewModel.userProfile.name,
-                body = "等级 ${viewModel.userProfile.level} · ${if (viewModel.userProfile.loggedIn) "已登录" else "游客模式"}"
+                body = "等级 ${viewModel.userProfile.level} · ${if (viewModel.userProfile.isLoggedIn) "已登录" else "游客模式"}"
             )
         }
         item {
@@ -327,16 +325,16 @@ private fun WatchListScreen(title: String, content: ScalingLazyListScope.() -> U
         timeText = { TimeText() },
         vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) },
         positionIndicator = { PositionIndicator(scalingLazyListState = listState) }
-    ) { paddingValues ->
+    ) {
         ScalingLazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
             autoCentering = AutoCenteringParams(itemIndex = 0),
             contentPadding = PaddingValues(
                 start = 8.dp,
-                top = paddingValues.calculateTopPadding(),
+                top = 30.dp,
                 end = 8.dp,
-                bottom = paddingValues.calculateBottomPadding() + 10.dp
+                bottom = 20.dp
             )
         ) {
             item {
