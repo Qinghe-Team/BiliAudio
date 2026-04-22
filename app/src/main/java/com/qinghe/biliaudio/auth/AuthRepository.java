@@ -28,6 +28,10 @@ public class AuthRepository {
         return currentUser;
     }
 
+    public void setCurrentUser(UserProfile user) {
+        currentUser = user;
+    }
+
     public UserProfile getCurrentUser() {
         return currentUser;
     }

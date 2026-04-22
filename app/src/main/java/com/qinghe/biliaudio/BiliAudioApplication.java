@@ -10,7 +10,7 @@ public class BiliAudioApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        appContainer = new AppContainer();
+        appContainer = new AppContainer(this);
     }
 
     public AppContainer getAppContainer() {

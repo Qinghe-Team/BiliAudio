@@ -1,5 +1,8 @@
 package com.qinghe.biliaudio.ui
 
+import android.graphics.Bitmap
+import android.graphics.Color
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,18 +10,22 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.CompactChip
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
@@ -28,6 +35,8 @@ import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.TitleCard
 import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import com.qinghe.biliaudio.model.AuthMethod
 import com.qinghe.biliaudio.model.VideoItem
 
@@ -53,18 +62,28 @@ fun HomeScreen(
             }
         }
         item { AppChip("搜索", "热门词与结果列表", onSearch) }
-        item { AppChip("登录", if (viewModel.userProfile.isLoggedIn) "已登录：${viewModel.userProfile.name}" else "支持扫码/验证码/密码", onLogin) }
+        item { AppChip("登录", if (viewModel.userProfile.isLoggedIn) "已登录：${viewModel.userProfile.name}" else "支持扫码登录", onLogin) }
         item { AppChip("我的收藏", "收藏夹 / 稍后再听 / 历史", onFavorites) }
         item { AppChip("播放历史", "查看最近播放记录", onHistory) }
         item { AppChip("个人中心", "账号信息与阶段规划", onProfile) }
-        item { SectionLabel("推荐内容") }
-        items(viewModel.featuredVideos.size) { index ->
-            val video = viewModel.featuredVideos[index]
-            AppCompactChip(
-                label = video.title,
-                secondary = "${video.author} · ${video.durationLabel}",
-                onClick = { onOpenVideo(video) }
-            )
+        item { SectionLabel(if (viewModel.isLoadingHome) "推荐内容（加载中）" else "推荐内容") }
+        if (viewModel.isLoadingHome) {
+            item {
+                Box(Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else if (viewModel.featuredVideos.isEmpty()) {
+            item { AppChip("刷新推荐", "从B站获取最新内容", onClick = viewModel::loadHome) }
+        } else {
+            items(viewModel.featuredVideos.size) { index ->
+                val video = viewModel.featuredVideos[index]
+                AppCompactChip(
+                    label = video.title,
+                    secondary = "${video.author} · ${video.durationLabel}",
+                    onClick = { onOpenVideo(video) }
+                )
+            }
         }
     }
 }
@@ -72,10 +91,28 @@ fun HomeScreen(
 @Composable
 fun LoginScreen(viewModel: AppViewModel) {
     WatchListScreen(title = "登录") {
+        // QR code display when scan is in progress
+        val qrUrl = viewModel.qrUrl
+        if (qrUrl != null) {
+            item {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    QrCodeImage(url = qrUrl)
+                }
+            }
+            item {
+                TextBlock(title = "请用B站App扫码", body = viewModel.qrStatusMessage)
+            }
+            if (viewModel.isQrExpired) {
+                item { AppChip("二维码已过期", "点击重新生成", onClick = viewModel::startQrLogin) }
+            }
+            return@WatchListScreen
+        }
+
         item {
             TextBlock(
                 title = if (viewModel.userProfile.isLoggedIn) "当前已登录" else "选择登录方式",
-                body = viewModel.userProfile.signature
+                body = if (viewModel.qrStatusMessage.isNotBlank()) viewModel.qrStatusMessage
+                       else viewModel.userProfile.signature
             )
         }
         items(viewModel.loginMethods.size) { index ->
@@ -98,22 +135,26 @@ fun SearchScreen(viewModel: AppViewModel, openDetail: () -> Unit) {
         item {
             TextBlock(
                 title = if (viewModel.searchQuery.isBlank()) "热门搜索" else "当前关键词：${viewModel.searchQuery}",
-                body = "手表优先采用短路径选择，不强依赖键盘输入。"
+                body = "点击下方关键词即可搜索相关视频。"
             )
         }
         items(viewModel.hotKeywords.size) { index ->
             val keyword = viewModel.hotKeywords[index]
             AppCompactChip(
                 label = keyword,
-                secondary = "点击筛选相关视频",
+                secondary = "点击搜索相关视频",
                 onClick = { viewModel.search(keyword) }
             )
         }
-        item { SectionLabel("搜索结果") }
-        if (viewModel.searchResults.isEmpty()) {
+        item { SectionLabel(if (viewModel.isLoadingSearch) "搜索结果（加载中）" else "搜索结果") }
+        if (viewModel.isLoadingSearch) {
             item {
-                TextBlock(title = "暂无结果", body = "可继续尝试热门关键词。")
+                Box(Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
+        } else if (viewModel.searchResults.isEmpty()) {
+            item { TextBlock(title = "暂无结果", body = "可继续尝试热门关键词。") }
         } else {
             items(viewModel.searchResults.size) { index ->
                 val video = viewModel.searchResults[index]
@@ -146,13 +187,19 @@ fun VideoDetailScreen(
             )
         }
         if (video != null) {
-            item { AppChip("开始播放", "音频化播放 / 队列 / 定时", onClick = { viewModel.startPlayback(); openPlayer() }) }
+            item {
+                AppChip(
+                    label = if (viewModel.isLoadingPlayback) "获取播放地址…" else "开始播放",
+                    secondary = "获取B站音频流并播放",
+                    onClick = { viewModel.startPlayback(); openPlayer() }
+                )
+            }
             item { AppChip("互动操作", "点赞 / 投币 / 收藏", onClick = openInteractions) }
             item { AppChip("评论区", "查看评论与反馈", onClick = openComments) }
             item {
                 TextBlock(
                     title = "创作者 · ${video.author}",
-                    body = "时长 ${video.durationLabel}，后续可在此接入分 P、相关推荐、清晰度与播放地址解析。"
+                    body = "时长 ${video.durationLabel}"
                 )
             }
         }
@@ -164,9 +211,26 @@ fun PlayerScreen(viewModel: AppViewModel, openSpeed: () -> Unit, openTimer: () -
     WatchListScreen(title = "播放器") {
         item {
             TextBlock(
-                title = if (viewModel.playbackSettings.isPlaying) viewModel.playbackSettings.currentTitle else "等待播放",
+                title = if (viewModel.playbackSettings.isPlaying) viewModel.playbackSettings.currentTitle
+                        else if (viewModel.isLoadingPlayback) "获取播放地址中…"
+                        else "等待播放",
                 body = "当前倍率 ${String.format("%.1f", viewModel.playbackSettings.playbackSpeed)}x · ${timerLabel(viewModel.playbackSettings.sleepTimerMinutes)}"
             )
+        }
+        if (viewModel.isLoadingPlayback) {
+            item {
+                Box(Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else {
+            item {
+                AppChip(
+                    label = if (viewModel.playbackSettings.isPlaying) "暂停" else "继续播放",
+                    secondary = if (viewModel.playbackSettings.isPlaying) "点击暂停音频" else "点击继续播放",
+                    onClick = viewModel::pauseOrResume
+                )
+            }
         }
         item { SectionLabel("倍速预设") }
         items(viewModel.speedPresets().size) { index ->
@@ -275,14 +339,14 @@ fun ProfileScreen(viewModel: AppViewModel) {
         }
         item {
             TextBlock(
-                title = "一期已接入域",
-                body = "认证、搜索、视频、互动、评论、收藏、播放控制、播放历史；后续补齐个人投稿、历史同步、完整 API。"
+                title = "已接入功能",
+                body = "扫码登录、搜索（实时B站）、排行榜推荐、ExoPlayer音频播放、播放历史。"
             )
         }
         item {
             TextBlock(
-                title = "UI 结构",
-                body = "主界面保留高频入口；登录、搜索、详情、播放器、互动、评论等均拆成子页。"
+                title = "B站API来源",
+                body = "基于 xtcqinghe/bac 文档实现，含WBI签名认证与Cookie会话管理。"
             )
         }
     }
@@ -317,6 +381,38 @@ fun SleepTimerScreen(viewModel: AppViewModel, close: () -> Unit) {
         item { AppChip("应用定时", "保存并返回播放器", onClick = { viewModel.applyCustomTimer(); close() }) }
     }
 }
+
+// ── QR Code composable ────────────────────────────────────────────────────
+
+@Composable
+private fun QrCodeImage(url: String) {
+    val bitmap = remember(url) { generateQrBitmap(url) }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "登录二维码",
+            modifier = Modifier.size(160.dp)
+        )
+    } else {
+        Text("二维码生成失败", textAlign = TextAlign.Center)
+    }
+}
+
+private fun generateQrBitmap(url: String, sizePx: Int = 320): Bitmap? {
+    return try {
+        val writer = QRCodeWriter()
+        val matrix = writer.encode(url, BarcodeFormat.QR_CODE, sizePx, sizePx)
+        val bmp = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        for (x in 0 until sizePx) {
+            for (y in 0 until sizePx) {
+                bmp.setPixel(x, y, if (matrix[x, y]) Color.BLACK else Color.WHITE)
+            }
+        }
+        bmp
+    } catch (_: Exception) { null }
+}
+
+// ── Shared primitives ─────────────────────────────────────────────────────
 
 @Composable
 private fun WatchListScreen(title: String, content: ScalingLazyListScope.() -> Unit) {
@@ -405,11 +501,11 @@ private fun TextBlock(title: String, body: String) {
 }
 
 private fun loginHint(method: AuthMethod): String = when (method) {
-    AuthMethod.QR_CODE -> "适合手机配合扫描授权"
+    AuthMethod.QR_CODE -> "用手机B站App扫描二维码"
     AuthMethod.SMS_CODE -> "适合无扫码环境的快速验证"
     AuthMethod.PASSWORD -> "适合老账号直接输入"
 }
 
-private fun timerLabel(minutes: Int): String {
-    return if (minutes <= 0) "未设置定时关闭" else "${minutes} 分钟后关闭"
-}
+private fun timerLabel(minutes: Int): String =
+    if (minutes <= 0) "未设置定时关闭" else "${minutes} 分钟后关闭"
+
