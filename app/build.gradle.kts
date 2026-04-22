@@ -8,6 +8,12 @@ android {
     namespace = "com.qinghe.biliaudio"
     compileSdk = 34
 
+    val releaseStoreFile = System.getenv("KEYSTORE_FILE") ?: (findProperty("releaseStoreFile") as String?)
+    val releaseStorePassword = System.getenv("KEYSTORE_PASSWORD") ?: (findProperty("releaseStorePassword") as String?)
+    val releaseKeyAlias = System.getenv("KEY_ALIAS") ?: (findProperty("releaseKeyAlias") as String?)
+    val releaseKeyPassword = System.getenv("KEY_PASSWORD") ?: (findProperty("releaseKeyPassword") as String?)
+    val hasReleaseSigning = !releaseStoreFile.isNullOrBlank() && !releaseStorePassword.isNullOrBlank() && !releaseKeyAlias.isNullOrBlank() && !releaseKeyPassword.isNullOrBlank()
+
     defaultConfig {
         applicationId = "com.qinghe.biliaudio"
         minSdk = 25
@@ -21,9 +27,21 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

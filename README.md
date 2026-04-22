@@ -87,3 +87,23 @@
 ```
 
 > 当前沙箱环境无法解析 Google Maven，因此依赖下载与完整构建校验可能失败；工程结构与源码已按 Android / Compose for Wear OS 方式搭建完成。
+
+## GitHub Actions
+
+已从 `9xhk-1/163MusicPro` 迁移并适配以下 workflow：
+
+- `.github/workflows/build.yml`：分支 / PR 构建与测试
+- `.github/workflows/release.yml`：`main` 分支自动构建并发布 Release APK
+- `.github/workflows/opencode.yml`：评论触发 opencode
+
+### 需要配置的 Secrets
+
+- `KEYSTORE_BASE64`
+- `KEYSTORE_PASSWORD`
+- `KEY_ALIAS`
+- `KEY_PASSWORD`
+- `MINIMAX_API_KEY`（仅 opencode 需要）
+
+### 签名说明
+
+CI 会优先使用 `KEYSTORE_BASE64` 解码出的签名文件构建正式 APK；未提供签名信息时，release 构建会退回到 debug signing，保证 workflow 可持续产出安装包用于联调。

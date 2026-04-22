@@ -1,0 +1,67 @@
+name: Build APK
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            if echo "$KEYSTORE_BASE64" | base64 -di > release.keystore 2>/dev/null && [ -s release.keystore ]; then
+              echo "KEYSTORE_FILE=$PWD/release.keystore" >> "$GITHUB_ENV"
+              echo "Keystore decoded successfully ($(wc -c < release.keystore) bytes)"
+            else
+              echo "::warning::Keystore decode failed, will use debug signing"
+              rm -f release.keystore
+            fi
+          else
+            echo "No KEYSTORE_BASE64 secret configured, will use debug signing"
+          fi
+
+      - name: Run unit tests and build APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -f release.keystore ]; then
+            echo "Building signed release APK..."
+            ./gradlew test assembleRelease --stacktrace
+          else
+            echo "No signing config found, building debug and release APKs with debug signing"
+            ./gradlew test assembleDebug assembleRelease --stacktrace
+          fi
+
+      - name: Upload APKs and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: BiliAudio-build-artifacts
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/reports/**
+            app/build/test-results/**
+          if-no-files-found: warn
