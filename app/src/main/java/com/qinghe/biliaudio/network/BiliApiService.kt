@@ -249,6 +249,12 @@ object BiliApiService {
         return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
     }
 
-    private fun defaultHotKeywords() =
-        listOf("有声书", "广播剧", "纪录片", "英语听力", "故事会", "科学", "音乐", "脱口秀")
+    private fun defaultHotKeywords() = DEFAULT_HOT_KEYWORDS
+
+    companion object {
+        /** Fallback hot keywords shown when the API is unavailable. */
+        val DEFAULT_HOT_KEYWORDS = listOf(
+            "有声书", "广播剧", "纪录片", "英语听力", "故事会", "科学", "音乐", "脱口秀"
+        )
+    }
 }

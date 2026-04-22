@@ -88,7 +88,9 @@ class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
             try {
                 val videos = appContainer.videoApiClient.fetchFeaturedVideos()
                 if (videos.isNotEmpty()) featuredVideos = videos
-            } catch (_: Exception) { /* keep empty list */ }
+            } catch (e: Exception) {
+                errorMessage = "推荐内容加载失败：${e.message}"
+            }
             try {
                 val keywords = appContainer.searchApiClient.fetchHotKeywords()
                 if (keywords.isNotEmpty()) hotKeywords = keywords

@@ -409,7 +409,10 @@ private fun generateQrBitmap(url: String, sizePx: Int = 320): Bitmap? {
             }
         }
         bmp
-    } catch (_: Exception) { null }
+    } catch (e: Exception) {
+        android.util.Log.e("BiliAudio", "QR code generation failed for URL: $url", e)
+        null
+    }
 }
 
 // ── Shared primitives ─────────────────────────────────────────────────────

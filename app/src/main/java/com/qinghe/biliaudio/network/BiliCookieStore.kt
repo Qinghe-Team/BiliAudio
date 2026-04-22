@@ -15,20 +15,16 @@ class BiliCookieStore(context: Context) : CookieJar {
 
     init {
         // Restore persisted cookies on startup
-        prefs.all.forEach { (key, value) ->
+        prefs.all.forEach { (_, value) ->
             if (value is String) {
                 try {
-                    val parts = value.split("|")
-                    if (parts.size >= 3) {
-                        val host = parts[0]
-                        val name = parts[1]
-                        val cookieVal = parts[2]
-                        val url = HttpUrl.Builder()
-                            .scheme("https").host(host).build()
-                        val cookie = Cookie.Builder()
-                            .domain(host).name(name).value(cookieVal).build()
-                        store.getOrPut(host) { mutableListOf() }.add(cookie)
-                    }
+                    val obj = org.json.JSONObject(value)
+                    val host = obj.getString("h")
+                    val name = obj.getString("n")
+                    val cookieVal = obj.getString("v")
+                    val cookie = Cookie.Builder()
+                        .domain(host).name(name).value(cookieVal).build()
+                    store.getOrPut(host) { mutableListOf() }.add(cookie)
                 } catch (_: Exception) { /* skip malformed entries */ }
             }
         }
@@ -41,7 +37,11 @@ class BiliCookieStore(context: Context) : CookieJar {
         cookies.forEach { cookie ->
             list.removeAll { it.name == cookie.name }
             list.add(cookie)
-            editor.putString("${host}_${cookie.name}", "${host}|${cookie.name}|${cookie.value}")
+            val json = org.json.JSONObject()
+            json.put("h", host)
+            json.put("n", cookie.name)
+            json.put("v", cookie.value)
+            editor.putString("${host}_${cookie.name}", json.toString())
         }
         editor.apply()
     }

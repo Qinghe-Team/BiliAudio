@@ -26,6 +26,7 @@ class PlayerController(
     // ExoPlayer is main-thread only; lazy-initialised on first access from UI.
     private var exoPlayer: ExoPlayer? = null
 
+    @Volatile
     private var _settings = PlaybackSettings("未开始播放", 1.0, 0, false)
 
     val playbackSettings: PlaybackSettings get() = _settings

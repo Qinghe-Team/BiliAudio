@@ -25,6 +25,9 @@ object WbiSigner {
     @Volatile private var cachedMixinKey: String? = null
     @Volatile private var keyExpiry: Long = 0L
 
+    /** Cache TTL for the WBI mixin key (12 hours). */
+    private const val KEY_CACHE_TTL_MS = 12 * 3600 * 1000L
+
     /** Append wts + w_rid to the given param map and return the signed map. */
     suspend fun sign(params: Map<String, String>): Map<String, String> {
         val key = getMixinKey()
@@ -51,7 +54,7 @@ object WbiSigner {
             val raw = imgKey + subKey
             val mixed = MIX_INDEXES.mapNotNull { raw.getOrNull(it) }.joinToString("").take(32)
             cachedMixinKey = mixed
-            keyExpiry = now + 12 * 3600 * 1000L // 12h
+            keyExpiry = now + KEY_CACHE_TTL_MS
             mixed
         }
     }
