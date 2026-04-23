@@ -40,7 +40,9 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.CompactChip
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
+import androidx.wear.compose.material.InlineSliderDefaults
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -332,7 +334,9 @@ fun PlayerScreen(
                 InlineSlider(
                     value = settings.progress,
                     onValueChange = { viewModel.seekTo(it) },
-                    increments = 100,
+                    steps = 100,
+                    decreaseIcon = { Icon(InlineSliderDefaults.Decrease, contentDescription = null) },
+                    increaseIcon = { Icon(InlineSliderDefaults.Increase, contentDescription = null) },
                     segmented = false,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -391,7 +395,9 @@ fun PlayerScreen(
                 InlineSlider(
                     value = viewModel.volumeDraft,
                     onValueChange = { viewModel.setVolume(it) },
-                    increments = 20,
+                    steps = 20,
+                    decreaseIcon = { Icon(InlineSliderDefaults.Decrease, contentDescription = null) },
+                    increaseIcon = { Icon(InlineSliderDefaults.Increase, contentDescription = null) },
                     segmented = false,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -485,8 +491,10 @@ fun SleepTimerScreen(viewModel: AppViewModel, close: () -> Unit) {
                 InlineSlider(
                     value = viewModel.customTimerDraft.toFloat(),
                     onValueChange = { viewModel.setCustomTimerDraft(it.toInt()) },
+                    steps = 299,
                     valueRange = 1f..300f,
-                    increments = 299,
+                    decreaseIcon = { Icon(InlineSliderDefaults.Decrease, contentDescription = null) },
+                    increaseIcon = { Icon(InlineSliderDefaults.Increase, contentDescription = null) },
                     segmented = false,
                     modifier = Modifier.fillMaxWidth()
                 )

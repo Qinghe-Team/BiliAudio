@@ -16,8 +16,6 @@ import okhttp3.Request
  */
 object BiliApiService {
 
-    private val gson = Gson()
-
     // ──────────────────────────────────────────────────────────────────────
     // QR Code Login
     // ──────────────────────────────────────────────────────────────────────
@@ -195,10 +193,10 @@ object BiliApiService {
                 try {
                     val po = p.asJsonObject
                     VideoPage(
-                        page = po["page"]?.asInt ?: 1,
-                        cid = po["cid"]?.asLong ?: 0L,
-                        title = po["part"]?.asString ?: "",
-                        durationSeconds = po["duration"]?.asInt ?: 0
+                        po["page"]?.asInt ?: 1,
+                        po["cid"]?.asLong ?: 0L,
+                        po["part"]?.asString ?: "",
+                        po["duration"]?.asInt ?: 0
                     )
                 } catch (_: Exception) { null }
             } ?: emptyList()
