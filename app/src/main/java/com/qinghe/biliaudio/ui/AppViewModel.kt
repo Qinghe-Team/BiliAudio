@@ -299,7 +299,7 @@ class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
         customTimerDraft = (customTimerDraft + delta).coerceIn(1, 300)
     }
 
-    fun setCustomTimerDraft(minutes: Int) {
+    fun inputTimerMinutes(minutes: Int) {
         customTimerDraft = minutes.coerceIn(1, 300)
     }
 

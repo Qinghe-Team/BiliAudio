@@ -490,7 +490,7 @@ fun SleepTimerScreen(viewModel: AppViewModel, close: () -> Unit) {
                 Text("分钟数 (1–300)", style = MaterialTheme.typography.caption1)
                 InlineSlider(
                     value = viewModel.customTimerDraft.toFloat(),
-                    onValueChange = { viewModel.setCustomTimerDraft(it.toInt()) },
+                    onValueChange = { viewModel.inputTimerMinutes(it.toInt()) },
                     steps = 299,
                     valueRange = 1f..300f,
                     decreaseIcon = { Icon(InlineSliderDefaults.Decrease, contentDescription = null) },
