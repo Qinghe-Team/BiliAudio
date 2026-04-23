@@ -18,10 +18,7 @@ fun BiliAudioApp(appContainer: AppContainer) {
         startDestination = AppDestination.HOME.route
     ) {
         composable(AppDestination.HOME.route) {
-            HomeRoute(
-                viewModel = viewModel,
-                navigate = navController
-            )
+            HomeRoute(viewModel = viewModel, navigate = navController)
         }
         composable(AppDestination.LOGIN.route) {
             LoginScreen(viewModel = viewModel)
@@ -37,11 +34,18 @@ fun BiliAudioApp(appContainer: AppContainer) {
                 viewModel = viewModel,
                 openPlayer = { navController.navigate(AppDestination.PLAYER.route) },
                 openInteractions = { navController.navigate(AppDestination.INTERACTIONS.route) },
-                openComments = { navController.navigate(AppDestination.COMMENTS.route) }
+                openComments = { navController.navigate(AppDestination.COMMENTS.route) },
+                openPartSelect = { navController.navigate(AppDestination.PART_SELECT.route) }
             )
         }
         composable(AppDestination.PLAYER.route) {
             PlayerScreen(
+                viewModel = viewModel,
+                openMore = { navController.navigate(AppDestination.PLAYER_MORE.route) }
+            )
+        }
+        composable(AppDestination.PLAYER_MORE.route) {
+            PlayerMoreScreen(
                 viewModel = viewModel,
                 openSpeed = {
                     viewModel.resetCustomSpeedDraft()
@@ -50,7 +54,15 @@ fun BiliAudioApp(appContainer: AppContainer) {
                 openTimer = {
                     viewModel.resetCustomTimerDraft()
                     navController.navigate(AppDestination.SLEEP_TIMER.route)
-                }
+                },
+                openInteractions = { navController.navigate(AppDestination.INTERACTIONS.route) },
+                close = { navController.popBackStack() }
+            )
+        }
+        composable(AppDestination.PART_SELECT.route) {
+            PartSelectScreen(
+                viewModel = viewModel,
+                close = { navController.popBackStack() }
             )
         }
         composable(AppDestination.INTERACTIONS.route) {

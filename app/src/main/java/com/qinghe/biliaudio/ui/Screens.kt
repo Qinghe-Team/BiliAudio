@@ -14,13 +14,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -43,7 +41,6 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.CompactChip
 import androidx.wear.compose.material.InlineSlider
-import androidx.wear.compose.material.InlineSliderDefaults
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -57,7 +54,6 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.qinghe.biliaudio.model.AuthMethod
 import com.qinghe.biliaudio.model.VideoItem
-import com.qinghe.biliaudio.model.VideoPage
 
 // ── Home ──────────────────────────────────────────────────────────────────────
 
@@ -338,8 +334,6 @@ fun PlayerScreen(
                     onValueChange = { viewModel.seekTo(it) },
                     increments = 100,
                     segmented = false,
-                    decreaseIcon = { InlineSliderDefaults.Decrease },
-                    increaseIcon = { InlineSliderDefaults.Increase },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(
@@ -399,8 +393,6 @@ fun PlayerScreen(
                     onValueChange = { viewModel.setVolume(it) },
                     increments = 20,
                     segmented = false,
-                    decreaseIcon = { InlineSliderDefaults.Decrease },
-                    increaseIcon = { InlineSliderDefaults.Increase },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -496,8 +488,6 @@ fun SleepTimerScreen(viewModel: AppViewModel, close: () -> Unit) {
                     valueRange = 1f..300f,
                     increments = 299,
                     segmented = false,
-                    decreaseIcon = { InlineSliderDefaults.Decrease },
-                    increaseIcon = { InlineSliderDefaults.Increase },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
