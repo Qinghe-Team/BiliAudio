@@ -17,12 +17,12 @@ class VideoApiClient {
     suspend fun fetchFeaturedVideos(): List<VideoItem> =
         BiliApiService.fetchRankingVideos()
 
-    /** Fetch full video detail (including cid needed for stream URL). */
+    /** Fetch full video detail (including cid, cover URL, and pages needed for playback). */
     suspend fun fetchVideoDetail(bvid: String): VideoItem? {
         val info = BiliApiService.fetchVideoInfo(bvid) ?: return null
         return VideoItem(
             info.bvid, info.title, info.author, info.desc, info.duration, "",
-            info.cid, info.avid
+            info.cid, info.avid, info.coverUrl, info.pages
         )
     }
 

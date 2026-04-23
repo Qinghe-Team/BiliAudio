@@ -1,10 +1,10 @@
 package com.qinghe.biliaudio.network
 
-import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.qinghe.biliaudio.model.UserProfile
 import com.qinghe.biliaudio.model.VideoItem
+import com.qinghe.biliaudio.model.VideoPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
@@ -139,7 +139,8 @@ object BiliApiService {
             val author = obj["author"]?.asString ?: ""
             val desc = obj["description"]?.asString ?: obj["desc"]?.asString ?: ""
             val duration = obj["duration"]?.asString ?: ""
-            VideoItem(bvid, title, author, desc, duration, "")
+            val coverUrl = normalizeCoverUrl(obj["pic"]?.asString ?: "")
+            VideoItem(bvid, title, author, desc, duration, "", 0L, 0L, coverUrl, emptyList())
         } catch (_: Exception) { null }
     }
 
@@ -170,7 +171,8 @@ object BiliApiService {
             val author = obj["owner"]?.asJsonObject?.get("name")?.asString ?: ""
             val desc = obj["desc"]?.asString ?: obj["description"]?.asString ?: ""
             val duration = formatDuration(obj["duration"]?.asInt ?: 0)
-            VideoItem(bvid, title, author, desc, duration, "")
+            val coverUrl = normalizeCoverUrl(obj["pic"]?.asString ?: "")
+            VideoItem(bvid, title, author, desc, duration, "", 0L, 0L, coverUrl, emptyList())
         } catch (_: Exception) { null }
     }
 
@@ -188,6 +190,18 @@ object BiliApiService {
             val root = JsonParser.parseString(body).asJsonObject
             if (root["code"].asInt != 0) return@withContext null
             val data = root["data"].asJsonObject
+            val pagesArray = data["pages"]?.asJsonArray
+            val pages = pagesArray?.mapNotNull { p ->
+                try {
+                    val po = p.asJsonObject
+                    VideoPage(
+                        page = po["page"]?.asInt ?: 1,
+                        cid = po["cid"]?.asLong ?: 0L,
+                        title = po["part"]?.asString ?: "",
+                        durationSeconds = po["duration"]?.asInt ?: 0
+                    )
+                } catch (_: Exception) { null }
+            } ?: emptyList()
             VideoInfoResult(
                 avid = data["aid"].asLong,
                 bvid = data["bvid"].asString,
@@ -195,7 +209,9 @@ object BiliApiService {
                 title = data["title"].asString,
                 author = data["owner"].asJsonObject["name"].asString,
                 desc = data["desc"].asString,
-                duration = formatDuration(data["duration"].asInt)
+                duration = formatDuration(data["duration"].asInt),
+                coverUrl = normalizeCoverUrl(data["pic"]?.asString ?: ""),
+                pages = pages
             )
         } catch (e: Exception) {
             null
@@ -209,7 +225,9 @@ object BiliApiService {
         val title: String,
         val author: String,
         val desc: String,
-        val duration: String
+        val duration: String,
+        val coverUrl: String,
+        val pages: List<VideoPage>
     )
 
     // ──────────────────────────────────────────────────────────────────────
@@ -240,6 +258,11 @@ object BiliApiService {
     // ──────────────────────────────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────────────────────────────
+
+    private fun normalizeCoverUrl(url: String): String {
+        if (url.isBlank()) return ""
+        return if (url.startsWith("http")) url else "https:$url"
+    }
 
     private fun formatDuration(seconds: Int): String {
         if (seconds <= 0) return "--:--"

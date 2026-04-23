@@ -27,7 +27,7 @@ class PlayerController(
     private var exoPlayer: ExoPlayer? = null
 
     @Volatile
-    private var _settings = PlaybackSettings("未开始播放", 1.0, 0, false)
+    private var _settings = PlaybackSettings("未开始播放", 1.0, 0, false, 0L, 0L, 1.0f)
 
     val playbackSettings: PlaybackSettings get() = _settings
     val speedPresets: List<Double> get() = playerApiClient.speedPresets
@@ -44,7 +44,10 @@ class PlayerController(
                             _settings.currentTitle,
                             _settings.playbackSpeed,
                             _settings.sleepTimerMinutes,
-                            isPlaying
+                            isPlaying,
+                            player.currentPosition,
+                            player.duration.coerceAtLeast(0L),
+                            _settings.volume
                         )
                     }
                 })
@@ -58,7 +61,8 @@ class PlayerController(
      */
     suspend fun play(videoItem: VideoItem): PlaybackSettings {
         ensurePlayerCreated()
-        _settings = PlaybackSettings(videoItem.title, _settings.playbackSpeed, _settings.sleepTimerMinutes, false)
+        _settings = PlaybackSettings(videoItem.title, _settings.playbackSpeed, _settings.sleepTimerMinutes,
+            false, 0L, 0L, _settings.volume)
 
         val url = withContext(Dispatchers.IO) {
             videoApiClient.fetchStreamUrl(videoItem)
@@ -76,32 +80,62 @@ class PlayerController(
                 player.prepare()
                 player.playWhenReady = true
                 applySpeedToPlayer(player, _settings.playbackSpeed)
+                player.volume = _settings.volume
             }
             _settings = PlaybackSettings(
                 videoItem.title, _settings.playbackSpeed, _settings.sleepTimerMinutes,
-                url != null
+                url != null,
+                0L, player.duration.coerceAtLeast(0L), _settings.volume
             )
         }
         return _settings
     }
 
+    /** Snapshot current position & duration from the player (call from main thread). */
+    fun snapshotProgress(): PlaybackSettings {
+        val player = exoPlayer ?: return _settings
+        val pos = player.currentPosition.coerceAtLeast(0L)
+        val dur = player.duration.coerceAtLeast(0L)
+        _settings = PlaybackSettings(_settings.currentTitle, _settings.playbackSpeed,
+            _settings.sleepTimerMinutes, player.isPlaying, pos, dur, _settings.volume)
+        return _settings
+    }
+
+    fun seekTo(positionMs: Long) {
+        exoPlayer?.seekTo(positionMs.coerceAtLeast(0L))
+    }
+
+    fun setVolume(volume: Float): PlaybackSettings {
+        val v = volume.coerceIn(0f, 1f)
+        _settings = PlaybackSettings(_settings.currentTitle, _settings.playbackSpeed,
+            _settings.sleepTimerMinutes, _settings.isPlaying,
+            _settings.positionMs, _settings.durationMs, v)
+        exoPlayer?.volume = v
+        return _settings
+    }
+
     fun setPlaybackSpeed(speed: Double): PlaybackSettings {
         val normalized = speed.coerceIn(0.5, 3.0)
-        _settings = PlaybackSettings(_settings.currentTitle, normalized, _settings.sleepTimerMinutes, _settings.isPlaying)
+        _settings = PlaybackSettings(_settings.currentTitle, normalized, _settings.sleepTimerMinutes,
+            _settings.isPlaying, _settings.positionMs, _settings.durationMs, _settings.volume)
         exoPlayer?.let { applySpeedToPlayer(it, normalized) }
         return _settings
     }
 
     fun setSleepTimerMinutes(minutes: Int): PlaybackSettings {
         val normalized = minutes.coerceIn(0, 180)
-        _settings = PlaybackSettings(_settings.currentTitle, _settings.playbackSpeed, normalized, _settings.isPlaying)
+        _settings = PlaybackSettings(_settings.currentTitle, _settings.playbackSpeed, normalized,
+            _settings.isPlaying, _settings.positionMs, _settings.durationMs, _settings.volume)
         return _settings
     }
 
     fun pauseOrResume(): PlaybackSettings {
         val player = exoPlayer ?: return _settings
         if (player.isPlaying) player.pause() else player.play()
-        _settings = PlaybackSettings(_settings.currentTitle, _settings.playbackSpeed, _settings.sleepTimerMinutes, player.isPlaying)
+        _settings = PlaybackSettings(_settings.currentTitle, _settings.playbackSpeed,
+            _settings.sleepTimerMinutes, player.isPlaying,
+            player.currentPosition.coerceAtLeast(0L),
+            player.duration.coerceAtLeast(0L), _settings.volume)
         return _settings
     }
 

@@ -6,6 +6,8 @@ enum class AppDestination(val route: String) {
     SEARCH("search"),
     DETAIL("detail"),
     PLAYER("player"),
+    PLAYER_MORE("player_more"),
+    PART_SELECT("part_select"),
     INTERACTIONS("interactions"),
     COMMENTS("comments"),
     FAVORITES("favorites"),
