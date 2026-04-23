@@ -40,6 +40,12 @@ class AudioPlaybackService : MediaSessionService() {
         const val CHANNEL_ID = "biliaudio_playback"
         const val NOTIFICATION_ID = 1001
 
+        /**
+         * Maximum duration in milliseconds for which the WakeLock is held.
+         * Renewed on restart; released immediately in onDestroy.
+         */
+        private const val WAKELOCK_TIMEOUT_MS = 12 * 60 * 60 * 1000L   // 12 h
+
         /** Accessed by [PlayerController] to reuse the service-owned player. */
         @Volatile
         private var instance: AudioPlaybackService? = null
@@ -157,7 +163,7 @@ class AudioPlaybackService : MediaSessionService() {
         wakeLock = pm.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
             "BiliAudio::PlaybackWakeLock"
-        ).also { it.acquire(12 * 60 * 60 * 1000L) }  // up to 12 h, released in onDestroy
+        ).also { it.acquire(WAKELOCK_TIMEOUT_MS) }
     }
 
     private fun releaseWakeLock() {

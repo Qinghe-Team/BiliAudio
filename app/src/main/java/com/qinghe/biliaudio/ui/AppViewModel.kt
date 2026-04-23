@@ -92,13 +92,13 @@ class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
         startProgressPolling()
     }
 
-    // ── Progress polling (updates position / duration every second) ─────
+    // ── Progress polling (updates position / duration every ~500 ms) ────
 
     private fun startProgressPolling() {
         progressJob?.cancel()
         progressJob = viewModelScope.launch {
             while (isActive) {
-                delay(500L)
+                delay(PROGRESS_POLL_INTERVAL_MS)
                 if (playbackSettings.isPlaying) {
                     playbackSettings = appContainer.playerController.snapshotProgress()
                 }
@@ -376,6 +376,9 @@ class AppViewModel(private val appContainer: AppContainer) : ViewModel() {
     }
 
     companion object {
+        /** Update interval for playback position / duration display. */
+        private const val PROGRESS_POLL_INTERVAL_MS = 500L
+
         fun factory(appContainer: AppContainer): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
